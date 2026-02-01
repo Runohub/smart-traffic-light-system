@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_self">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Traffic Light System Simulation</title>
+    <meta name="description" content="AI-powered traffic light simulation using intelligent agents and rule-based reasoning to optimize traffic flow based on car density">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "traffic-red": "#ef4444",
+                        "traffic-yellow": "#f59e0b",
+                        "traffic-green": "#10b981",
+                        "road-gray": "#4b5563",
+                        "car-blue": "#3b82f6",
+                        "car-red": "#ef4444",
+                        "car-green": "#10b981",
+                        "car-yellow": "#f59e0b",
+                        "simulation-bg": "#1f2937"
+                    },
+                    animation: {
+                        "pulse-slow": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                        "car-move": "carMove 8s linear infinite"
+                    },
+                    keyframes: {
+                        carMove: {
+                            "0%": { transform: "translateX(-100%)" },
+                            "100%": { transform: "translateX(1000%)" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-gray-900 text-gray-100">
+    <header class="bg-gray-800 border-b border-gray-700">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2 mb-4 md:mb-0">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500"></div>
+                    <h1 class="text-2xl font-bold">Smart Traffic AI</h1>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" onclick="event.preventDefault(); showSection('simulation')" class="text-blue-400 hover:text-blue-300 transition-colors">
+                        <i class="fas fa-traffic-light mr-2"></i>Simulation
+                    </a>
+                    <a href="#" onclick="event.preventDefault(); showSection('rules')" class="text-gray-400 hover:text-gray-300 transition-colors">
+                        <i class="fas fa-brain mr-2"></i>AI Rules
+                    </a>
+                    <a href="#" onclick="event.preventDefault(); showSection('stats')" class="text-gray-400 hover:text-gray-300 transition-colors">
+                        <i class="fas fa-chart-bar mr-2"></i>Statistics
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <section class="mb-12 text-center">
+            <h2 class="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                Smart Traffic Light System Simulation
+            </h2>
+            <p class="text-xl text-gray-300 mb-6 max-w-3xl mx-auto">
+                An AI-powered simulation demonstrating intelligent traffic control using rule-based reasoning and car density analysis
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <div class="bg-gray-800 rounded-lg px-4 py-2">
+                    <span class="text-green-400 font-semibold">AI Concept:</span> Intelligent Agents
+                </div>
+                <div class="bg-gray-800 rounded-lg px-4 py-2">
+                    <span class="text-blue-400 font-semibold">Method:</span> Rule-Based Reasoning
+                </div>
+                <div class="bg-gray-800 rounded-lg px-4 py-2">
+                    <span class="text-yellow-400 font-semibold">Outcome:</span> Smart City AI Understanding
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Simulation Section -->
+        <section id="simulation" class="mb-12">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Simulation Canvas -->
+                <div class="lg:col-span-2">
+                    <div class="bg-simulation-bg rounded-xl p-6 border border-gray-700">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold">Traffic Intersection Simulation</h3>
+                            <div class="flex space-x-4">
+                                <button id="startBtn" onclick="startSimulation()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                                    <i class="fas fa-play mr-2"></i>Start
+                                </button>
+                                <button id="pauseBtn" onclick="pauseSimulation()" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                                    <i class="fas fa-pause mr-2"></i>Pause
+                                </button>
+                                <button onclick="resetSimulation()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                                    <i class="fas fa-redo mr-2"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Traffic Intersection -->
+                        <div class="relative h-96 bg-gray-800 rounded-lg overflow-hidden">
+                            <!-- Roads -->
+                            <div class="absolute top-1/2 left-0 w-full h-16 bg-road-gray -translate-y-1/2"></div>
+                            <div class="absolute left-1/2 top-0 h-full w-16 bg-road-gray -translate-x-1/2"></div>
+                            
+                            <!-- Road markings -->
+                            <div class="absolute top-1/2 left-0 w-full h-1 bg-yellow-300 -translate-y-1/2 opacity-50"></div>
+                            <div class="absolute left-1/2 top-0 h-full w-1 bg-yellow-300 -translate-x-1/2 opacity-50"></div>
+                            
+                            <!-- Traffic Lights -->
+                            <div id="northLight" class="absolute top-4 left-1/2 -translate-x-1/2">
+                                <div class="traffic-light">
+                                    <div class="light red active"></div>
+                                    <div class="light yellow"></div>
+                                    <div class="light green"></div>
+                                </div>
+                                <div class="text-center mt-2 font-semibold">North</div>
+                            </div>
+                            
+                            <div id="southLight" class="absolute bottom-4 left-1/2 -translate-x-1/2">
+                                <div class="traffic-light">
+                                    <div class="light red active"></div>
+                                    <div class="light yellow"></div>
+                                    <div class="light green"></div>
+                                </div>
+                                <div class="text-center mt-2 font-semibold">South</div>
+                            </div>
+                            
+                            <div id="eastLight" class="absolute top-1/2 right-4 -translate-y-1/2">
+                                <div class="traffic-light">
+                                    <div class="light red active"></div>
+                                    <div class="light yellow"></div>
+                                    <div class="light green"></div>
+                                </div>
+                                <div class="text-center mt-2 font-semibold">East</div>
+                            </div>
+                            
+                            <div id="westLight" class="absolute top-1/2 left-4 -translate-y-1/2">
+                                <div class="traffic-light">
+                                    <div class="light red"></div>
+                                    <div class="light yellow"></div>
+                                    <div class="light green active"></div>
+                                </div>
+                                <div class="text-center mt-2 font-semibold">West</div>
+                            </div>
+
+                            <!-- Car Queues -->
+                            <div id="northQueue" class="absolute top-20 left-1/2 -translate-x-1/2 w-32 h-8 border-2 border-dashed border-gray-600 rounded"></div>
+                            <div id="southQueue" class="absolute bottom-20 left-1/2 -translate-x-1/2 w-32 h-8 border-2 border-dashed border-gray-600 rounded"></div>
+                            <div id="eastQueue" class="absolute top-1/2 right-20 -translate-y-1/2 w-8 h-32 border-2 border-dashed border-gray-600 rounded"></div>
+                            <div id="westQueue" class="absolute top-1/2 left-20 -translate-y-1/2 w-8 h-32 border-2 border-dashed border-gray-600 rounded"></div>
+
+                            <!-- Moving Cars -->
+                            <div id="movingCars" class="absolute inset-0"></div>
+                        </div>
+
+                        <!-- Simulation Controls -->
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-semibold mb-3">Traffic Density Controls</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm mb-2">North-South Traffic: <span id="nsDensityValue">5</span> cars/min</label>
+                                        <input type="range" id="nsDensity" min="1" max="20" value="5" class="w-full" oninput="updateDensity('ns', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm mb-2">East-West Traffic: <span id="ewDensityValue">3</span> cars/min</label>
+                                        <input type="range" id="ewDensity" min="1" max="20" value="3" class="w-full" oninput="updateDensity('ew', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-3">AI Parameters</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm mb-2">Density Threshold: <span id="thresholdValue">4</span> cars</label>
+                                        <input type="range" id="densityThreshold" min="1" max="10" value="4" class="w-full" oninput="updateThreshold(this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm mb-2">Green Light Duration: <span id="durationValue">10</span>s</label>
+                                        <input type="range" id="greenDuration" min="5" max="30" value="10" class="w-full" oninput="updateDuration(this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Rules Panel -->
+                <div class="lg:col-span-1">
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 h-full">
+                        <h3 class="text-2xl font-bold mb-6">AI Rule-Based System</h3>
+                        
+                        <div class="space-y-6">
+                            <div class="bg-gray-900 rounded-lg p-4">
+                                <h4 class="font-semibold text-green-400 mb-2">
+                                    <i class="fas fa-robot mr-2"></i>Intelligent Agent Rules
+                                </h4>
+                                <ul class="space-y-2 text-sm">
+                                    <li class="flex items-start">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mt-1 mr-2"></div>
+                                        <span>Monitor car density in all directions</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mt-1 mr-2"></div>
+                                        <span>Prioritize direction with highest density</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mt-1 mr-2"></div>
+                                        <span>Adjust green light duration based on queue length</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mt-1 mr-2"></div>
+                                        <span>Prevent starvation (no direction waits too long)</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-gray-900 rounded-lg p-4">
+                                <h4 class="font-semibold text-blue-400 mb-2">
+                                    <i class="fas fa-cogs mr-2"></i>Current Decision Logic
+                                </h4>
+                                <div id="decisionLogic" class="text-sm">
+                                    <p class="mb-2">Evaluating traffic patterns...</p>
+                                    <div class="bg-gray-800 rounded p-3">
+                                        <div class="flex justify-between mb-1">
+                                            <span>West Queue:</span>
+                                            <span id="westCount" class="font-semibold">0</span>
+                                        </div>
+                                        <div class="flex justify-between mb-1">
+                                            <span>East Queue:</span>
+                                            <span id="eastCount" class="font-semibold">0</span>
+                                        </div>
+                                        <div class="flex justify-between mb-1">
+                                            <span>North Queue:</span>
+                                            <span id="northCount" class="font-semibold">0</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>South Queue:</span>
+                                            <span id="southCount" class="font-semibold">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-900 rounded-lg p-4">
+                                <h4 class="font-semibold text-yellow-400 mb-2">
+                                    <i class="fas fa-chart-line mr-2"></i>Performance Metrics
+                                </h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span>Average Wait Time:</span>
+                                            <span id="avgWaitTime" class="font-semibold">0s</span>
+                                        </div>
+                                        <div class="w-full bg-gray-700 rounded-full h-2">
+                                            <div id="waitTimeBar" class="bg-yellow-500 h-2 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span>Cars Processed:</span>
+                                            <span id="carsProcessed" class="font-semibold">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-700 rounded-full h-2">
+                                            <div id="processedBar" class="bg-green-500 h-2 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Concepts Section -->
+        <section id="rules" class="mb-12 hidden">
+            <div class="bg-gray-800 rounded-xl p-8 border border-gray-700">
+                <h3 class="text-3xl font-bold mb-8 text-center">AI Concepts in Smart Traffic Control</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-gray-900 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full bg-blue-900 flex items-center justify-center mr-4">
+                                <i class="fas fa-brain text-2xl text-blue-400"></i>
+                            </div>
+                            <h4 class="text-xl font-bold">Intelligent Agents</h4>
+                        </div>
+                        <p class="text-gray-300 mb-4">
+                            Each traffic light acts as an intelligent agent that:
+                        </p>
+                        <ul class="space-y-2">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-2"></i>
+                                <span>Perceives its environment (car density, queue length)</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-2"></i>
+                                <span>Makes autonomous decisions based on rules</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-2"></i>
+                                <span>Adapts to changing traffic conditions</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-2"></i>
+                                <span>Optimizes for multiple objectives (flow, wait time)</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-gray-900 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full bg-green-900 flex items-center justify-center mr-4">
+                                <i class="fas fa-project-diagram text-2xl text-green-400"></i>
+                            </div>
+                            <h4 class="text-xl font-bold">Rule-Based Reasoning</h4>
+                        </div>
+                        <p class="text-gray-300 mb-4">
+                            The system uses if-then rules to make decisions:
+                        </p>
+                        <div class="bg-gray-800 rounded p-4 font-mono text-sm">
+                            <p class="text-green-400">IF queue_length > threshold THEN</p>
+                            <p class="ml-4 text-blue-400">extend_green_light(duration)</p>
+                            <p class="text-green-400">ELSE IF wait_time > max_wait THEN</p>
+                            <p class="ml-4 text-blue-400">prioritize_direction()</p>
+                            <p class="text-green-400">ELSE</p>
+                            <p class="ml-4 text-blue-400">cycle_lights_normal()</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-gray-900 rounded-lg p-6">
+                    <h4 class="text-xl font-bold mb-4">Implementation Details</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-purple-900 flex items-center justify-center mx-auto mb-3">
+                                <i class="fab fa-python text-3xl text-purple-400"></i>
+                            </div>
+                            <h5 class="font-bold mb-2">Python Backend</h5>
+                            <p class="text-sm text-gray-300">Simulates traffic patterns and AI decision logic</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-yellow-900 flex items-center justify-center mx-auto mb-3">
+                                <i class="fab fa-js-square text-3xl text-yellow-400"></i>
+                            </div>
+                            <h5 class="font-bold mb-2">JavaScript Frontend</h5>
+                            <p class="text-sm text-gray-300">Real-time visualization and user interaction</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-red-900 flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-city text-3xl text-red-400"></i>
+                            </div>
+                            <h5 class="font-bold mb-2">Smart City Integration</h5>
+                            <p class="text-sm text-gray-300">Real-world application in urban planning</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics Section -->
+        <section id="stats" class="hidden">
+            <div class="bg-gray-800 rounded-xl p-8 border border-gray-700">
+                <h3 class="text-3xl font-bold mb-8 text-center">Simulation Statistics & Analysis</h3>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="text-xl font-bold mb-6">Real-time Metrics</h4>
+                        <div class="space-y-6">
+                            <div class="bg-gray-900 rounded-lg p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h5 class="font-semibold">Traffic Flow Efficiency</h5>
+                                    <span id="efficiencyScore" class="text-2xl font-bold text-green-400">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-4">
+                                    <div id="efficiencyBar" class="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-900 rounded-lg p-4 text-center">
+                                    <div class="text-3xl font-bold text-blue-400 mb-2" id="totalCars">0</div>
+                                    <div class="text-sm text-gray-300">Total Cars</div>
+                                </div>
+                                <div class="bg-gray-900 rounded-lg p-4 text-center">
+                                    <div class="text-3xl font-bold text-green-400 mb-2" id="carsThrough">0</div>
+                                    <div class="text-sm text-gray-300">Cars Through</div>
+                                </div>
+                                <div class="bg-gray-900 rounded-lg p-4 text-center">
+                                    <div class="text-3xl font-bold text-yellow-400 mb-2" id="avgSpeed">0</div>
+                                    <div class="text-sm text-gray-300">Avg Speed (km/h)</div>
+                                </div>
+                                <div class="bg-gray-900 rounded-lg p-4 text-center">
+                                    <div class="text-3xl font-bold text-red-400 mb-2" id="maxWait">0</div>
+                                    <div class="text-sm text-gray-300">Max Wait (s)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xl font-bold mb-6">Learning Outcomes</h4>
+                        <div class="bg-gray-900 rounded-lg p-6">
+                            <p class="text-gray-300 mb-4">
+                                This simulation demonstrates key AI concepts used in smart city infrastructure:
+                            </p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start">
+                                    <i class="fas fa-lightbulb text-yellow-400 mt-1 mr-3"></i>
+                                    <span><strong>Adaptive Systems:</strong> How AI can respond to real-time data</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-balance-scale text-blue-400 mt-1 mr-3"></i>
+                                    <span><strong>Optimization:</strong> Balancing multiple objectives (flow vs wait time)</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-network-wired text-green-400 mt-1 mr-3"></i>
+                                    <span><strong>Distributed Intelligence:</strong> Multiple agents working together</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-chart-bar text-purple-400 mt-1 mr-3"></i>
+                                    <span><strong>Data-Driven Decisions:</strong> Using metrics to improve performance</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 border-t border-gray-700 mt-12">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500"></div>
+                        <span class="text-xl font-bold">Smart Traffic AI</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">
+                        An educational simulation demonstrating AI concepts in smart city infrastructure
+                    </p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-linkedin text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-500 text-sm">
+                <p>© 2024 Smart Traffic Light System Simulation. Created for educational purposes to demonstrate AI concepts in smart cities.</p>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        .traffic-light {
+            width: 60px;
+            height: 180px;
+            background: #2d3748;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .light {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            opacity: 0.3;
+            transition: opacity 0.3s, box-shadow 0.3s;
+        }
+        
+        .light.active {
+            opacity: 1;
+            box-shadow: 0 0 20px currentColor;
+        }
+        
+        .light.red { background-color: #ef4444; }
+        .light.yellow { background-color: #f59e0b; }
+        .light.green { background-color: #10b981; }
+        
+        .car {
+            position: absolute;
+            width: 30px;
+            height: 15px;
+            border-radius: 3px;
+            transition: transform 0.1s linear;
+        }
+        
+        .queue-car {
+            width: 20px;
+            height: 10px;
+            border-radius: 2px;
+            margin: 2px;
+            display: inline-block;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .blinking {
+            animation: blink 1s infinite;
+        }
+    </style>
+
+    <script>
+        // Simulation State
+        let simulation = {
+            running: false,
+            interval: null,
+            time: 0,
+            cars: [],
+            queues: {
+                north: [],
+                south: [],
+                east: [],
+                west: []
+            },
+            lights: {
+                north: "red",
+                south: "red",
+                east: "red",
+                west: "green"
+            },
+            stats: {
+                totalCars: 0,
+                carsProcessed: 0,
+                totalWaitTime: 0,
+                maxWaitTime: 0
+            },
+            settings: {
+                nsDensity: 5,
+                ewDensity: 3,
+                densityThreshold: 4,
+                greenDuration: 10,
+                currentGreen: "west",
+                greenTimer: 0,
+                yellowTimer: 0
+            }
+        };
+
+        // Initialize simulation
+        function initSimulation() {
+            updateUI();
+            createInitialCars();
+        }
+
+        // Start simulation
+        function startSimulation() {
+            if (simulation.running) return;
+            
+            simulation.running = true;
+            document.getElementById("startBtn").disabled = true;
+            document.getElementById("pauseBtn").disabled = false;
+            
+            simulation.interval = setInterval(() => {
+                simulation.time++;
+                updateTraffic();
+                spawnCars();
+                moveCars();
+                updateAI();
+                updateUI();
+            }, 1000);
+        }
+
+        // Pause simulation
+        function pauseSimulation() {
+            simulation.running = false;
+            clearInterval(simulation.interval);
+            document.getElementById("startBtn").disabled = false;
+            document.getElementById("pauseBtn").disabled = true;
+        }
+
+        // Reset simulation
+        function resetSimulation() {
+            pauseSimulation();
+            simulation = {
+                running: false,
+                interval: null,
+                time: 0,
+                cars: [],
+                queues: {
+                    north: [],
+                    south: [],
+                    east: [],
+                    west: []
+                },
+                lights: {
+                    north: "red",
+                    south: "red",
+                    east: "red",
+                    west: "green"
+                },
+                stats: {
+                    totalCars: 0,
+                    carsProcessed: 0,
+                    totalWaitTime: 0,
+                    maxWaitTime: 0
+                },
+                settings: {
+                    nsDensity: 5,
+                    ewDensity: 3,
+                    densityThreshold: 4,
+                    greenDuration: 10,
+                    currentGreen: "west",
+                    greenTimer: 0,
+                    yellowTimer: 0
+                }
+            };
+            updateUI();
+            createInitialCars();
+        }
+
+        // Create initial cars
+        function createInitialCars() {
+            const movingCars = document.getElementById("movingCars");
+            movingCars.innerHTML = "";
+            
+            // Add some initial cars in queues
+            for (let i = 0; i < 3; i++) {
+                addCarToQueue("west");
+                addCarToQueue("north");
+            }
+            for (let i = 0; i < 2; i++) {
+                addCarToQueue("east");
+                addCarToQueue("south");
+            }
+        }
+
+        // Update traffic based on AI rules
+        function updateTraffic() {
+            const currentGreen = simulation.settings.currentGreen;
+            simulation.settings.greenTimer++;
+            
+            // Check if it's time to change lights
+            if (simulation.settings.greenTimer >= simulation.settings.greenDuration) {
+                changeLights();
+            }
+            
+            // Process cars in green direction
+            if (simulation.lights[currentGreen] === "green") {
+                processCars(currentGreen);
+            }
+        }
+
+        // AI-based light changing logic
+        function changeLights() {
+            const current = simulation.settings.currentGreen;
+            const queues = simulation.queues;
+            
+            // Turn current green to yellow
+            simulation.lights[current] = "yellow";
+            updateLightUI(current, "yellow");
+            
+            // AI Decision: Choose next green based on queue density
+            let nextGreen = getNextGreenDirection();
+            
+            // After yellow period, switch to next green
+            setTimeout(() => {
+                simulation.lights[current] = "red";
+                simulation.lights[nextGreen] = "green";
+                simulation.settings.currentGreen = nextGreen;
+                simulation.settings.greenTimer = 0;
+                
+                updateLightUI(current, "red");
+                updateLightUI(nextGreen, "green");
+                
+                // Adjust green duration based on queue length
+                const queueLength = simulation.queues[nextGreen].length;
+                simulation.settings.greenDuration = Math.min(
+                    30,
+                    Math.max(5, 10 + Math.floor(queueLength / 2))
+                );
+                document.getElementById("durationValue").textContent = simulation.settings.greenDuration;
+                document.getElementById("greenDuration").value = simulation.settings.greenDuration;
+                
+            }, 2000); // 2 second yellow light
+        }
+
+        // AI decision logic for next green direction
+        function getNextGreenDirection() {
+            const queues = simulation.queues;
+            const current = simulation.settings.currentGreen;
+            
+            // Calculate queue densities
+            const densities = {
+                north: queues.north.length,
+                south: queues.south.length,
+                east: queues.east.length,
+                west: queues.west.length
+            };
+            
+            // Find direction with highest density
+            let maxDensity = 0;
+            let nextDirection = current;
+            
+            for (const [direction, density] of Object.entries(densities)) {
+                if (density > maxDensity && direction !== current) {
+                    maxDensity = density;
+                    nextDirection = direction;
+                }
+            }
+            
+            // If no significant density, cycle through directions
+            if (maxDensity < simulation.settings.densityThreshold) {
+                const directions = ["north", "south", "east", "west"];
+                const currentIndex = directions.indexOf(current);
+                nextDirection = directions[(currentIndex + 1) % 4];
+            }
+            
+            return nextDirection;
+        }
+
+        // Process cars in green direction
+        function processCars(direction) {
+            const queue = simulation.queues[direction];
+            if (queue.length > 0) {
+                // Remove car from queue
+                const car = queue.shift();
+                simulation.stats.carsProcessed++;
+                simulation.stats.totalWaitTime += simulation.time - car.spawnTime;
+                simulation.stats.maxWaitTime = Math.max(
+                    simulation.stats.maxWaitTime,
+                    simulation.time - car.spawnTime
+                );
+                
+                // Move car through intersection
+                moveCarThroughIntersection(car, direction);
+            }
+        }
+
+        // Spawn new cars based on density settings
+        function spawnCars() {
+            // North-South traffic
+            if (Math.random() < simulation.settings.nsDensity / 60) {
+                addCarToQueue(Math.random() > 0.5 ? "north" : "south");
+            }
+            
+            // East-West traffic
+            if (Math.random() < simulation.settings.ewDensity / 60) {
+                addCarToQueue(Math.random() > 0.5 ? "east" : "west");
+            }
+        }
+
+        // Add car to queue
+        function addCarToQueue(direction) {
+            const car = {
+                id: simulation.stats.totalCars++,
+                direction: direction,
+                spawnTime: simulation.time,
+                color: getRandomCarColor()
+            };
+            
+            simulation.queues[direction].push(car);
+            updateQueueUI(direction);
+        }
+
+        // Move car through intersection
+        function moveCarThroughIntersection(car, direction) {
+            const movingCars = document.getElementById("movingCars");
+            const carElement = document.createElement("div");
+            carElement.className = `car bg-${car.color}-500`;
+            carElement.id = `car-${car.id}`;
+            
+            // Position based on direction
+            let startX, startY, endX, endY;
+            const speed = 8; // seconds to cross
+            
+            switch (direction) {
+                case "west":
+                    startX = -30;
+                    startY = "50%";
+                    endX = "100%";
+                    endY = "50%";
+                    break;
+                case "east":
+                    startX = "100%";
+                    startY = "50%";
+                    endX = -30;
+                    endY = "50%";
+                    break;
+                case "north":
+                    startX = "50%";
+                    startY = -15;
+                    endX = "50%";
+                    endY = "100%";
+                    break;
+                case "south":
+                    startX = "50%";
+                    startY = "100%";
+                    endX = "50%";
+                    endY = -15;
+                    break;
+            }
+            
+            carElement.style.left = startX;
+            carElement.style.top = startY;
+            carElement.style.transform = `translate(-50%, -50%)`;
+            
+            movingCars.appendChild(carElement);
+            
+            // Animate car movement
+            setTimeout(() => {
+                carElement.style.transition = `left ${speed}s linear, top ${speed}s linear`;
+                carElement.style.left = endX;
+                carElement.style.top = endY;
+                
+                // Remove car after animation
+                setTimeout(() => {
+                    if (carElement.parentNode) {
+                        carElement.parentNode.removeChild(carElement);
+                    }
+                }, speed * 1000);
+            }, 100);
+        }
+
+        // Move waiting cars
+        function moveCars() {
+            // Update queue positions
+            for (const direction of ["north", "south", "east", "west"]) {
+                updateQueueUI(direction);
+            }
+        }
+
+        // Update AI decision making
+        function updateAI() {
+            const decisionDiv = document.getElementById("decisionLogic");
+            const queues = simulation.queues;
+            
+            let decisionText = "<p class='mb-2 font-semibold text-green-400'>AI Decision Process:</p>";
+            decisionText += "<div class='bg-gray-800 rounded p-3'>";
+            
+            // Calculate densities
+            const densities = Object.entries(queues).map(([dir, cars]) => ({
+                direction: dir,
+                count: cars.length
+            })).sort((a, b) => b.count - a.count);
+            
+            densities.forEach(item => {
+                const isGreen = simulation.lights[item.direction] === "green";
+                const color = isGreen ? "text-green-400" : "text-gray-300";
+                decisionText += `<div class="flex justify-between ${color} mb-1">
+                    <span>${item.direction.charAt(0).toUpperCase() + item.direction.slice(1)}:</span>
+                    <span class="font-semibold">${item.count} cars</span>
+                </div>`;
+            });
+            
+            decisionText += `</div><p class="mt-2 text-sm text-yellow-300">Next change in: ${simulation.settings.greenDuration - simulation.settings.greenTimer}s</p>`;
+            
+            decisionDiv.innerHTML = decisionText;
+        }
+
+        // Update UI
+        function updateUI() {
+            // Update queue counts
+            document.getElementById("westCount").textContent = simulation.queues.west.length;
+            document.getElementById("eastCount").textContent = simulation.queues.east.length;
+            document.getElementById("northCount").textContent = simulation.queues.north.length;
+            document.getElementById("southCount").textContent = simulation.queues.south.length;
+            
+            // Update statistics
+            const avgWait = simulation.stats.carsProcessed > 0 
+                ? Math.floor(simulation.stats.totalWaitTime / simulation.stats.carsProcessed)
+                : 0;
+            
+            document.getElementById("avgWaitTime").textContent = `${avgWait}s`;
+            document.getElementById("carsProcessed").textContent = simulation.stats.carsProcessed;
+            document.getElementById("totalCars").textContent = simulation.stats.totalCars;
+            document.getElementById("carsThrough").textContent = simulation.stats.carsProcessed;
+            document.getElementById("maxWait").textContent = simulation.stats.maxWaitTime;
+            
+            // Update progress bars
+            const waitTimePercent = Math.min(100, avgWait * 5);
+            document.getElementById("waitTimeBar").style.width = `${waitTimePercent}%`;
+            
+            const processedPercent = Math.min(100, simulation.stats.carsProcessed * 2);
+            document.getElementById("processedBar").style.width = `${processedPercent}%`;
+            
+            // Calculate efficiency score
+            const efficiency = Math.min(100, 
+                100 - (avgWait * 2) + (simulation.stats.carsProcessed * 0.5)
+            );
+            document.getElementById("efficiencyScore").textContent = `${Math.max(0, Math.floor(efficiency))}%`;
+            document.getElementById("efficiencyBar").style.width = `${Math.max(0, Math.floor(efficiency))}%`;
+            
+            // Update average speed (simulated)
+            const avgSpeed = 30 + Math.floor(Math.random() * 20);
+            document.getElementById("avgSpeed").textContent = avgSpeed;
+        }
+
+        // Update queue UI
+        function updateQueueUI(direction) {
+            const queueDiv = document.getElementById(`${direction}Queue`);
+            const cars = simulation.queues[direction];
+            
+            // Clear existing cars
+            queueDiv.innerHTML = "";
+            
+            // Add cars to queue
+            cars.forEach((car, index) => {
+                const carElement = document.createElement("div");
+                carElement.className = `queue-car bg-${car.color}-500`;
+                carElement.style.margin = "1px";
+                carElement.title = `Waiting: ${simulation.time - car.spawnTime}s`;
+                queueDiv.appendChild(carElement);
+            });
+        }
+
+        // Update light UI
+        function updateLightUI(direction, color) {
+            const lightDiv = document.getElementById(`${direction}Light`);
+            const lights = lightDiv.querySelectorAll(".light");
+            
+            lights.forEach(light => {
+                light.classList.remove("active");
+            });
+            
+            if (color === "red") {
+                lights[0].classList.add("active");
+            } else if (color === "yellow") {
+                lights[1].classList.add("active");
+            } else if (color === "green") {
+                lights[2].classList.add("active");
+            }
+        }
+
+        // Get random car color
+        function getRandomCarColor() {
+            const colors = ["blue", "red", "green", "yellow"];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Update density settings
+        function updateDensity(type, value) {
+            if (type === "ns") {
+                simulation.settings.nsDensity = parseInt(value);
+                document.getElementById("nsDensityValue").textContent = value;
+            } else {
+                simulation.settings.ewDensity = parseInt(value);
+                document.getElementById("ewDensityValue").textContent = value;
+            }
+        }
+
+        // Update threshold
+        function updateThreshold(value) {
+            simulation.settings.densityThreshold = parseInt(value);
+            document.getElementById("thresholdValue").textContent = value;
+        }
+
+        // Update duration
+        function updateDuration(value) {
+            simulation.settings.greenDuration = parseInt(value);
+            document.getElementById("durationValue").textContent = value;
+        }
+
+        // Show section
+        function showSection(sectionId) {
+            // Hide all sections
+            document.getElementById("simulation").classList.add("hidden");
+            document.getElementById("rules").classList.add("hidden");
+            document.getElementById("stats").classList.add("hidden");
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.remove("hidden");
+            
+            // Update navigation
+            const navLinks = document.querySelectorAll("nav a");
+            navLinks.forEach(link => {
+                link.classList.remove("text-blue-400");
+                link.classList.add("text-gray-400");
+            });
+            
+            // Highlight current section
+            const currentLink = Array.from(navLinks).find(link => 
+                link.getAttribute("onclick")?.includes(sectionId)
+            );
+            if (currentLink) {
+                currentLink.classList.remove("text-gray-400");
+                currentLink.classList.add("text-blue-400");
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener("DOMContentLoaded", () => {
+            initSimulation();
+            showSection("simulation");
+        });
+    </script>
+</body>
+</html>
